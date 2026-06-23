@@ -1,0 +1,73 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+# Load Dataset
+print("Loading Dataset...")
+
+train_data = pd.read_csv(
+    "train_data.txt",
+    sep=" ::: ",
+    engine="python",
+    names=["ID", "TITLE", "GENRE", "DESCRIPTION"]
+)
+
+# Handle Missing Values
+train_data["DESCRIPTION"] = train_data["DESCRIPTION"].fillna("")
+
+# Convert text to lowercase
+train_data["DESCRIPTION"] = train_data["DESCRIPTION"].str.lower()
+
+# Features and Labels
+X = train_data["DESCRIPTION"]
+y = train_data["GENRE"]
+
+# TF-IDF Vectorization
+tfidf = TfidfVectorizer(
+    stop_words="english",
+    max_features=5000
+)
+
+X = tfidf.fit_transform(X)
+
+# Split Data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Train Model
+print("Training Model...")
+
+model = LogisticRegression(max_iter=1000)
+
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\nModel Accuracy:", round(accuracy * 100, 2), "%")
+
+# User Input Prediction
+while True:
+    print("\n==============================")
+    movie_plot = input("Enter Movie Plot Summary:\n")
+
+    movie_vector = tfidf.transform([movie_plot])
+
+    prediction = model.predict(movie_vector)
+
+    print("\nPredicted Genre:", prediction[0])
+
+    again = input("\nPredict another movie? (yes/no): ")
+
+    if again.lower() != "yes":
+        print("Program Closed.")
+        break
